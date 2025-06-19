@@ -1,0 +1,26 @@
+TITLE: Factorial
+ID: P003_FACTORIAL
+CREATED_BY: system
+CREATED_DATE: 2024-01-15 10:30:00
+LANGUAGES: c cpp csharp java python
+TIME_LIMIT: 3
+
+DESCRIPTION:
+Write a program that calculates the factorial of a given non-negative integer.
+
+The factorial of a non-negative integer n is the product of all positive integers less than or equal to n.
+For example, factorial of 5 is 5! = 5 × 4 × 3 × 2 × 1 = 120
+
+Input: A single non-negative integer N
+Output: Print the factorial of N
+
+Constraints:
+- 0 <= N <= 12
+
+Note: 0! = 1 by definition
+
+TEST_CASES:
+test1.in -> test1.out
+test2.in -> test2.out
+test3.in -> test3.out
+test4.in -> test4.out

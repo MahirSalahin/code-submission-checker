@@ -1,0 +1,55 @@
+# User data and sensitive files
+data/users.txt
+data/*.dat
+data/*.db
+
+# Log files
+logs/*.log
+logs/*.txt
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+temp/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# Compiled files and binaries
+*.exe
+*.out
+*.class
+*.o
+*.obj
+
+# Submission files (unless specifically tracked)
+submissions/*/
+!submissions/README.md
+
+# Report files (unless specifically tracked)
+reports/*.txt
+reports/*.pdf
+!reports/README.md
+
+# Test output files
+test_output/
+*.diff
+
+# Personal configuration overrides
+config/local.conf
+src/config/local.conf

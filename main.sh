@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # =============================================================================
 # Code Submission Checker - Main Entry Point
@@ -16,6 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 source "$SCRIPT_DIR/src/config/config.sh"
 source "$SCRIPT_DIR/src/utils/ui.sh"
 source "$SCRIPT_DIR/src/auth/auth.sh"
+source "$SCRIPT_DIR/src/problems/problems.sh"
 
 # =============================================================================
 # Main Function
@@ -40,6 +41,7 @@ main() {
                 handle_signup
                 ;;
             3)
+                clear_screen
                 show_message "Thank you for using Code Submission Checker!" "info"
                 exit 0
                 ;;
@@ -77,13 +79,13 @@ handle_signin() {
     clear_screen
     show_header "SIGN IN - Press ESC to go back"
     
-    echo -e "${YELLOW}💡 Tip: Press ESC key to return to main menu${NC}"
     echo
     
     local username password
     
     # Get username with ESC detection
     if ! read_input_esc "${CYAN}Username: ${NC}" username; then
+        clear_screen
         return  # ESC was pressed
     fi
     
@@ -96,6 +98,7 @@ handle_signin() {
     
     # Get password with ESC detection
     if ! read_password_esc "${CYAN}Password: ${NC}" password; then
+        clear_screen
         return  # ESC was pressed
     fi
     echo
@@ -147,6 +150,7 @@ handle_signup() {
             signup_teacher
             ;;
         3)
+            clear_screen
             return
             ;;
         *)
@@ -160,7 +164,6 @@ signup_student() {
     clear_screen
     show_header "STUDENT REGISTRATION - Press ESC to go back"
     
-    echo -e "${YELLOW}💡 Tip: Press ESC key to return to previous menu${NC}"
     echo
     
     local student_id
@@ -168,6 +171,7 @@ signup_student() {
     # Get student ID with ESC detection
     echo -e "${CYAN}Enter your Student ID (this will be your username):${NC}"
     if ! read_input_esc "Student ID: " student_id; then
+        clear_screen
         return  # ESC was pressed
     fi
     
@@ -187,11 +191,13 @@ signup_student() {
     local password confirm_password
     
     if ! read_password_esc "Password: " password; then
+        clear_screen
         return  # ESC was pressed
     fi
     echo
     
     if ! read_password_esc "Confirm Password: " confirm_password; then
+        clear_screen
         return  # ESC was pressed
     fi
     echo
@@ -230,6 +236,7 @@ signup_teacher() {
     # Get username with ESC detection
     echo -e "${CYAN}Enter your username:${NC}"
     if ! read_input_esc "Username: " username; then
+        clear_screen
         return  # ESC was pressed
     fi
     
@@ -249,11 +256,13 @@ signup_teacher() {
     local password confirm_password
     
     if ! read_password_esc "Password: " password; then
+        clear_screen
         return  # ESC was pressed
     fi
     echo
     
     if ! read_password_esc "Confirm Password: " confirm_password; then
+        clear_screen
         return  # ESC was pressed
     fi
     echo
@@ -298,11 +307,9 @@ show_student_menu() {
         echo
         
         read -p "$(echo -e "${CYAN}Enter your choice: ${NC}")" choice
-        
-        case $choice in
+          case $choice in
             1)
-                show_message "Browse Problems feature coming soon!" "info"
-                sleep 2
+                browse_problems "$username"
                 ;;
             2)
                 show_message "Submit Solution feature coming soon!" "info"
@@ -316,6 +323,7 @@ show_student_menu() {
                 log_action "SIGNOUT" "$username" "Student signed out"
                 show_message "Signed out successfully!" "success"
                 sleep 1
+                clear_screen
                 return
                 ;;
             *)
@@ -358,6 +366,7 @@ show_teacher_menu() {
                 log_action "SIGNOUT" "$username" "Teacher signed out"
                 show_message "Signed out successfully!" "success"
                 sleep 1
+                clear_screen
                 return
                 ;;
             *)

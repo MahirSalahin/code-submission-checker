@@ -172,15 +172,13 @@ read_with_esc() {
     
     # Read character by character to detect ESC
     while true; do
-        if [[ "$is_password" == "true" ]]; then
-            read -s -n1 char
-        else
-            read -n1 char
-        fi
+        read -s -n1 char
         
         # Check for ESC key (ASCII 27)
         if [[ $(printf "%d" "'$char") -eq 27 ]] 2>/dev/null; then
             echo
+            echo -e "${YELLOW}✓ Returning to previous menu...${NC}"
+            sleep 0.5
             return 1  # ESC was pressed
         fi
         
@@ -190,13 +188,11 @@ read_with_esc() {
             break
         fi
         
-        # Check for backspace
+        # Check for backspace (ASCII 127 or 8)
         if [[ $(printf "%d" "'$char") -eq 127 ]] 2>/dev/null || [[ $(printf "%d" "'$char") -eq 8 ]] 2>/dev/null; then
             if [[ ${#input} -gt 0 ]]; then
                 input="${input%?}"  # Remove last character
-                if [[ "$is_password" != "true" ]]; then
-                    echo -n -e "\b \b"  # Move back, print space, move back again
-                fi
+                echo -n -e "\b \b"  # Move back, print space, move back again
             fi
             continue
         fi
@@ -207,6 +203,8 @@ read_with_esc() {
         # Display character (or * for password)
         if [[ "$is_password" == "true" ]]; then
             echo -n "*"
+        else
+            echo -n "$char"  # Echo the character for normal input
         fi
     done
     

@@ -1,7 +1,5 @@
 # User data and sensitive files
-data/users.txt
-data/*.dat
-data/*.db
+data/
 
 # Log files
 logs/*.log

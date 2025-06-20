@@ -327,10 +327,8 @@ show_student_menu() {
                 ;;
             2)
                 submit_solution "$username"
-                ;;
-            3)
-                show_message "My Submissions feature coming soon!" "info"
-                sleep 2
+                ;;            3)
+                show_my_submissions "$username"
                 ;;
             4)
                 log_action "SIGNOUT" "$username" "Student signed out"

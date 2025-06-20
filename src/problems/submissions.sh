@@ -612,6 +612,234 @@ run_tests_execution() {
     echo -e "$results"
 }
 
+# =============================================================================
+# My Submissions Management Functions
+# =============================================================================
+
+# Show all submissions for a user for a specific problem
+show_my_submissions() {
+    local username="$1"
+    
+    while true; do
+        clear_screen
+        show_header "MY SUBMISSIONS"
+        
+        # Get problem ID from user
+        echo -e "${CYAN}Enter Problem ID to view submissions (or press ESC to go back):${NC}"
+        local problem_id
+        if ! read_input_esc "Problem ID: " problem_id; then
+            clear_screen
+            return  # ESC was pressed
+        fi
+        
+        # Validate problem exists and get full problem name
+        local problem_name
+        if problem_name=$(find_problem_by_id "$problem_id"); then
+            local problem_dir="$PROBLEMS_DIR/$problem_name"
+        else
+            show_message "No submission found for problem '$problem_id'" "error"
+            sleep 2
+            continue
+        fi
+        
+        # Check if user has submissions for this problem
+        local submissions_dir="$SUBMISSIONS_DIR/$username/$problem_id"
+        if [[ ! -d "$submissions_dir" ]]; then
+            show_message "No submissions found for problem '$problem_id'!" "info"
+            sleep 2
+            continue
+        fi
+        
+        # List all submission files
+        local submission_files=()
+        
+        # Use a simpler approach that works better on Windows
+        if [[ -d "$submissions_dir" ]]; then
+            for file in "$submissions_dir"/*; do
+                if [[ -f "$file" ]]; then
+                    local filename=$(basename "$file")
+                    local extension="${filename##*.}"
+                    # Check if it's a source code file
+                    if [[ "$extension" =~ ^(py|c|cpp|cc|cxx|java|cs)$ ]]; then
+                        submission_files+=("$filename")
+                    fi
+                fi
+            done
+        fi
+        
+        if [[ ${#submission_files[@]} -eq 0 ]]; then
+            show_message "No submission files found for problem '$problem_id'!" "info"
+            sleep 2
+            continue
+        fi
+        
+        # Sort files by timestamp (newest first)
+        IFS=$'\n' submission_files=($(sort -r <<< "${submission_files[*]}"))
+        
+        # Display submissions and let user choose
+        while true; do
+            clear_screen
+            show_header "MY SUBMISSIONS - Problem: $problem_id"
+            
+            echo -e "${CYAN}Your submissions for this problem:${NC}"
+            echo
+            
+            for i in "${!submission_files[@]}"; do
+                local file="${submission_files[$i]}"
+                local timestamp=$(echo "$file" | cut -d'_' -f2-3)
+                local readable_time=$(format_submission_timestamp "$timestamp")
+                echo -e "${YELLOW}$((i+1)).${NC} $file"
+                echo -e "   ${GRAY}Submitted: $readable_time${NC}"
+                echo
+            done
+            
+            echo -e "${YELLOW}$((${#submission_files[@]}+1)).${NC} Back to problem selection"
+            echo
+            
+            read -p "$(echo -e "${CYAN}Select a submission to view (1-$((${#submission_files[@]}+1))): ${NC}")" choice
+            
+            if [[ "$choice" =~ ^[0-9]+$ ]] && [[ "$choice" -ge 1 ]] && [[ "$choice" -le ${#submission_files[@]} ]]; then
+                local selected_file="${submission_files[$((choice-1))]}"
+                view_submission_details "$username" "$problem_id" "$selected_file"
+            elif [[ "$choice" -eq $((${#submission_files[@]}+1)) ]]; then
+                break  # Back to problem selection
+            else
+                show_message "Invalid choice. Please select a valid option." "error"
+                sleep 1
+            fi
+        done
+    done
+}
+
+# View details of a specific submission
+view_submission_details() {
+    local username="$1"
+    local problem_id="$2"
+    local submission_file="$3"
+    
+    # Extract submission ID from filename
+    local submission_id=$(echo "$submission_file" | cut -d'_' -f1-3)
+    
+    while true; do
+        clear_screen
+        show_header "SUBMISSION DETAILS"
+        
+        echo -e "${CYAN}Problem ID:${NC} $problem_id"
+        echo -e "${CYAN}Submission File:${NC} $submission_file"
+        echo -e "${CYAN}Submission ID:${NC} $submission_id"
+        echo
+        
+        echo -e "${CYAN}What would you like to view?${NC}"
+        echo -e "${YELLOW}1.${NC} View Submission Code"
+        echo -e "${YELLOW}2.${NC} View Submission Report"
+        echo -e "${YELLOW}3.${NC} Back to submissions list"
+        echo
+        
+        read -p "$(echo -e "${CYAN}Enter your choice: ${NC}")" choice
+        
+        case $choice in
+            1)
+                view_submission_code "$username" "$problem_id" "$submission_file"
+                ;;
+            2)
+                view_submission_report "$submission_id"
+                ;;
+            3)
+                return
+                ;;
+            *)
+                show_message "Invalid choice. Please select 1, 2, or 3." "error"
+                sleep 1
+                ;;
+        esac
+    done
+}
+
+# View the actual code of a submission
+view_submission_code() {
+    local username="$1"
+    local problem_id="$2"
+    local submission_file="$3"
+    
+    local file_path="$SUBMISSIONS_DIR/$username/$problem_id/$submission_file"
+    
+    if [[ ! -f "$file_path" ]]; then
+        show_message "Submission file not found!" "error"
+        sleep 2
+        return
+    fi
+    
+    clear_screen
+    show_header "SUBMISSION CODE - $submission_file"
+    
+    echo -e "${CYAN}Code:${NC}"
+    echo -e "${GRAY}$(printf '=%.0s' {1..80})${NC}"
+    echo
+    
+    # Display the code with line numbers
+    local line_num=1
+    while IFS= read -r line; do
+        printf "${GRAY}%3d:${NC} %s\n" "$line_num" "$line"
+        ((line_num++))
+    done < "$file_path"
+    
+    echo
+    echo -e "${GRAY}$(printf '=%.0s' {1..80})${NC}"
+    echo
+    echo -e "${YELLOW}Press any key to continue...${NC}"
+    read -n 1 -s
+}
+
+# View the submission report
+view_submission_report() {
+    local submission_id="$1"
+    
+    local report_file="$REPORTS_DIR/${submission_id}_report.txt"
+    
+    if [[ ! -f "$report_file" ]]; then
+        show_message "Report file not found for submission ID: $submission_id" "error"
+        sleep 2
+        return
+    fi
+    
+    clear_screen
+    show_header "SUBMISSION REPORT - $submission_id"
+    
+    echo -e "${CYAN}Report:${NC}"
+    echo -e "${GRAY}$(printf '=%.0s' {1..80})${NC}"
+    echo
+    
+    # Display the report
+    cat "$report_file"
+    
+    echo
+    echo -e "${GRAY}$(printf '=%.0s' {1..80})${NC}"
+    echo
+    echo -e "${YELLOW}Press any key to continue...${NC}"
+    read -n 1 -s
+}
+
+# Format submission timestamp for readable display
+format_submission_timestamp() {
+    local timestamp="$1"
+    
+    # Extract date and time parts (format: YYYYMMDD_HHMMSS)
+    local date_part="${timestamp%_*}"
+    local time_part="${timestamp#*_}"
+    
+    # Format date (YYYYMMDD -> YYYY-MM-DD)
+    local year="${date_part:0:4}"
+    local month="${date_part:4:2}"
+    local day="${date_part:6:2}"
+    
+    # Format time (HHMMSS -> HH:MM:SS)
+    local hour="${time_part:0:2}"
+    local minute="${time_part:2:2}"
+    local second="${time_part:4:2}"
+    
+    echo "$year-$month-$day $hour:$minute:$second"
+}
+
 # Main submission function
 submit_solution() {
     local username="$1"

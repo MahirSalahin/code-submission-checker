@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 # =============================================================================
 # Code Submission Checker - Main Entry Point

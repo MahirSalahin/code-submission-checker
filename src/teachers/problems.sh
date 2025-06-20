@@ -9,6 +9,75 @@ source "$(dirname "${BASH_SOURCE[0]}")/../utils/ui.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/logging.sh"
 
 # =============================================================================
+# File Path Resolution Functions
+# =============================================================================
+
+# Resolve and validate file path using comprehensive cross-platform approach
+resolve_file_path() {
+    local input_path="$1"
+    local file_type="$2"  # For error messages
+    
+    # Normalize path for Windows compatibility
+    input_path=$(echo "$input_path" | sed 's|\\|/|g')
+    
+    # Try different path formats
+    local test_paths=("$input_path")
+    
+    # Add relative path attempts
+    local basename_only=$(basename "$input_path")
+    test_paths+=("./$basename_only")
+    test_paths+=("$basename_only")
+    
+    # Add Windows drive letter conversions if applicable
+    if [[ "$input_path" =~ ^[A-Za-z]: ]]; then
+        local drive_letter=$(echo "$input_path" | cut -c1 | tr '[:upper:]' '[:lower:]')
+        local path_without_drive=$(echo "$input_path" | cut -c3-)
+        
+        # Try various mount point formats
+        test_paths+=("/${drive_letter}${path_without_drive}")
+        test_paths+=("/cygdrive/${drive_letter}${path_without_drive}")
+        test_paths+=("/mnt/${drive_letter}${path_without_drive}")
+        
+        # Try with uppercase drive letter
+        local drive_letter_upper=$(echo "$input_path" | cut -c1 | tr '[:lower:]' '[:upper:]')
+        test_paths+=("/${drive_letter_upper}${path_without_drive}")
+        test_paths+=("/cygdrive/${drive_letter_upper}${path_without_drive}")
+        test_paths+=("/mnt/${drive_letter_upper}${path_without_drive}")
+    fi
+    
+    # For paths that don't start with drive letter, try as-is and with various prefixes
+    if [[ ! "$input_path" =~ ^[A-Za-z]: ]]; then
+        # Try with current working directory
+        test_paths+=("$(pwd)/$input_path")
+        
+        # Try common mount points
+        test_paths+=("/cygdrive/c/$input_path")
+        test_paths+=("/mnt/c/$input_path")
+        test_paths+=("/c/$input_path")
+    fi
+    
+    # Debug output to stderr so it doesn't interfere with return value (commented out for cleaner output)
+    # echo -e "${YELLOW}Attempting paths for $input_path:${NC}" >&2
+    # for test_path in "${test_paths[@]}"; do
+    #     echo -e "${YELLOW}  - $test_path${NC}" >&2
+    # done
+    
+    # Find working path
+    for test_path in "${test_paths[@]}"; do
+        if [[ -f "$test_path" ]]; then
+            echo -e "${GREEN}✓ Found: $(basename "$test_path")${NC}" >&2
+            echo "$test_path"  # Return only the clean path
+            return 0
+        fi
+    done
+    
+    # File not found
+    echo -e "${RED}✗ ${file_type} not found: $(basename "$input_path")${NC}" >&2
+    echo -e "${YELLOW}Please check file path and try again${NC}" >&2
+    return 1
+}
+
+# =============================================================================
 # Problem Management Functions
 # =============================================================================
 
@@ -40,11 +109,10 @@ add_problem() {
         clear_screen
         show_header "ADD PROBLEM - Press ESC to go back"
         
-        echo -e "${YELLOW}💡 Tip: Press ESC key to return to previous menu${NC}"
-        echo -e "${YELLOW}💡 For Windows paths, use forward slashes (/) or double backslashes (\\\\)${NC}"
+        echo -e "${YELLOW}💡 For paths, you may use forward slashes (/) or  backslashes (\\\)${NC}"
         echo
         
-        local title problem_file_path test_in_paths test_out_paths
+        local title problem_file_path test_in_paths test_out_paths time_limit
         
         # Get problem title
         echo -e "${CYAN}Enter problem title:${NC}"
@@ -59,13 +127,24 @@ add_problem() {
             continue
         fi
         
+        # Get time limit
+        echo -e "${CYAN}Enter time limit in seconds (default: 5):${NC}"
+        if ! read_input_esc "Time limit: " time_limit; then
+            clear_screen
+            return
+        fi
+        
+        # Validate time limit
+        if [[ -z "$time_limit" ]]; then
+            time_limit=5  # Default value
+        elif [[ ! "$time_limit" =~ ^[0-9]+$ ]] || [[ $time_limit -lt 1 ]] || [[ $time_limit -gt 60 ]]; then
+            show_message "Time limit must be a number between 1 and 60 seconds!" "error"
+            sleep 2
+            continue
+        fi
+        
         # Get problem.txt path with better instructions
         echo -e "${CYAN}Enter full path to problem.txt file:${NC}"
-        echo -e "${YELLOW}Examples:${NC}"
-        echo -e "${YELLOW}  - ./problem.txt (if file is in current directory)${NC}"
-        echo -e "${YELLOW}  - C:/Users/YourName/Desktop/problem.txt${NC}"
-        echo -e "${YELLOW}  - /cygdrive/f/Programs/bash/code-submission-checker/problem.txt${NC}"
-        echo -e "${CYAN}Current directory: $(pwd)${NC}"
         if ! read_file_path "Problem file: " problem_file_path; then
             clear_screen
             return
@@ -77,70 +156,17 @@ add_problem() {
             continue
         fi
         
-        # Normalize path for Windows compatibility
-        problem_file_path=$(echo "$problem_file_path" | sed 's|\\|/|g')
-        
-        # Try different path formats and show debugging info
-        local test_paths=("$problem_file_path")
-        
-        # Add various Windows path conversion attempts
-        if [[ "$problem_file_path" =~ ^[A-Za-z]: ]]; then
-            # Convert C:/path to /c/path format
-            local drive_letter=$(echo "$problem_file_path" | cut -c1 | tr '[:upper:]' '[:lower:]')
-            local path_without_drive=$(echo "$problem_file_path" | cut -c3-)
-            test_paths+=("/${drive_letter}${path_without_drive}")
-        fi
-        
-        # Add current directory relative path attempt
-        local basename_only=$(basename "$problem_file_path")
-        test_paths+=("./$basename_only")
-        test_paths+=("$basename_only")
-        
-        # Add absolute path with cygdrive prefix
-        if [[ "$problem_file_path" =~ ^[A-Za-z]: ]]; then
-            local drive_letter=$(echo "$problem_file_path" | cut -c1 | tr '[:upper:]' '[:lower:]')
-            local path_without_drive=$(echo "$problem_file_path" | cut -c3-)
-            test_paths+=("/cygdrive/${drive_letter}${path_without_drive}")
-        fi
-        
-        # Debug: Show current directory and attempted paths
-        echo -e "${YELLOW}Debug Info:${NC}"
-        echo -e "${YELLOW}Current directory: $(pwd)${NC}"
-        echo -e "${YELLOW}Attempting paths:${NC}"
-        for test_path in "${test_paths[@]}"; do
-            echo -e "${YELLOW}  - $test_path${NC}"
-        done
-        echo
-        
-        local file_found=false
-        local working_path=""
-        for test_path in "${test_paths[@]}"; do
-            if [[ -f "$test_path" ]]; then
-                file_found=true
-                working_path="$test_path"
-                echo -e "${GREEN}✓ Found at: $test_path${NC}"
-                break
-            fi
-        done
-        
-        if [[ "$file_found" != "true" ]]; then
-            echo -e "${RED}File not found at any of the attempted paths.${NC}"
-            echo -e "${YELLOW}Please try:${NC}"
-            echo -e "${YELLOW}1. Copy the file to: $(pwd)/problem.txt${NC}"
-            echo -e "${YELLOW}2. Or use relative path: ./problem.txt${NC}"
-            echo -e "${YELLOW}3. Or try full path with /cygdrive/ prefix${NC}"
-            sleep 5
+        # Resolve and validate file path
+        local resolved_path
+        if resolved_path=$(resolve_file_path "$problem_file_path" "Problem file"); then
+            problem_file_path="$resolved_path"
+        else
+            sleep 3
             continue
         fi
         
-        problem_file_path="$working_path"
-        
         # Get test input files
         echo -e "${CYAN}Enter paths to test input files (separated by spaces):${NC}"
-        echo -e "${YELLOW}Examples:${NC}"
-        echo -e "${YELLOW}  - ./test.in (if file is in current directory)${NC}"
-        echo -e "${YELLOW}  - C:/test1.in C:/test2.in${NC}"
-        echo -e "${YELLOW}  - /mnt/f/Programs/bash/code-submission-checker/test.in${NC}"
         if ! read_file_path "Test input files: " test_in_paths; then
             clear_screen
             return
@@ -152,56 +178,18 @@ add_problem() {
             continue
         fi
         
-        # Validate and normalize test input files
+        # Validate and resolve test input files
         local normalized_test_in=""
         local valid_test_in=true
-        echo -e "${YELLOW}Debug Info for Test Input Files:${NC}"
         for test_in_file in $test_in_paths; do
-            # Normalize path
-            test_in_file=$(echo "$test_in_file" | sed 's|\\|/|g')
-            
-            # Try different path formats
-            local test_in_paths_array=("$test_in_file")
-            
-            # Add relative path attempts
-            local basename_only=$(basename "$test_in_file")
-            test_in_paths_array+=("./$basename_only")
-            test_in_paths_array+=("$basename_only")
-            
-            # Add drive letter conversions if applicable
-            if [[ "$test_in_file" =~ ^[A-Za-z]: ]]; then
-                local drive_letter=$(echo "$test_in_file" | cut -c1 | tr '[:upper:]' '[:lower:]')
-                local path_without_drive=$(echo "$test_in_file" | cut -c3-)
-                test_in_paths_array+=("/${drive_letter}${path_without_drive}")
-                test_in_paths_array+=("/cygdrive/${drive_letter}${path_without_drive}")
-                test_in_paths_array+=("/mnt/${drive_letter}${path_without_drive}")
-            fi
-            
-            echo -e "${YELLOW}Attempting paths for $test_in_file:${NC}"
-            for test_path in "${test_in_paths_array[@]}"; do
-                echo -e "${YELLOW}  - $test_path${NC}"
-            done
-            
-            local in_file_found=false
-            local working_in_path=""
-            for test_in_path in "${test_in_paths_array[@]}"; do
-                if [[ -f "$test_in_path" ]]; then
-                    in_file_found=true
-                    working_in_path="$test_in_path"
-                    echo -e "${GREEN}✓ Found at: $test_in_path${NC}"
-                    break
-                fi
-            done
-            
-            if [[ "$in_file_found" != "true" ]]; then
-                echo -e "${RED}✗ Test input file not found: $test_in_file${NC}"
-                echo -e "${YELLOW}Suggestion: Try ./$(basename "$test_in_file")${NC}"
-                sleep 3
+            local resolved_test_in_path
+            if resolved_test_in_path=$(resolve_file_path "$test_in_file" "Test input file"); then
+                normalized_test_in="$normalized_test_in $resolved_test_in_path"
+            else
                 valid_test_in=false
+                sleep 3
                 break
             fi
-            
-            normalized_test_in="$normalized_test_in $working_in_path"
         done
         
         if [[ "$valid_test_in" != "true" ]]; then
@@ -212,10 +200,6 @@ add_problem() {
         
         # Get test output files
         echo -e "${CYAN}Enter paths to test output files (separated by spaces):${NC}"
-        echo -e "${YELLOW}Examples:${NC}"
-        echo -e "${YELLOW}  - ./test.out (if file is in current directory)${NC}"
-        echo -e "${YELLOW}  - C:/test1.out C:/test2.out${NC}"
-        echo -e "${YELLOW}  - /mnt/f/Programs/bash/code-submission-checker/test.out${NC}"
         if ! read_file_path "Test output files: " test_out_paths; then
             clear_screen
             return
@@ -227,56 +211,18 @@ add_problem() {
             continue
         fi
         
-        # Validate and normalize test output files
+        # Validate and resolve test output files
         local normalized_test_out=""
         local valid_test_out=true
-        echo -e "${YELLOW}Debug Info for Test Output Files:${NC}"
         for test_out_file in $test_out_paths; do
-            # Normalize path
-            test_out_file=$(echo "$test_out_file" | sed 's|\\|/|g')
-            
-            # Try different path formats
-            local test_out_paths_array=("$test_out_file")
-            
-            # Add relative path attempts
-            local basename_only=$(basename "$test_out_file")
-            test_out_paths_array+=("./$basename_only")
-            test_out_paths_array+=("$basename_only")
-            
-            # Add drive letter conversions if applicable
-            if [[ "$test_out_file" =~ ^[A-Za-z]: ]]; then
-                local drive_letter=$(echo "$test_out_file" | cut -c1 | tr '[:upper:]' '[:lower:]')
-                local path_without_drive=$(echo "$test_out_file" | cut -c3-)
-                test_out_paths_array+=("/${drive_letter}${path_without_drive}")
-                test_out_paths_array+=("/cygdrive/${drive_letter}${path_without_drive}")
-                test_out_paths_array+=("/mnt/${drive_letter}${path_without_drive}")
-            fi
-            
-            echo -e "${YELLOW}Attempting paths for $test_out_file:${NC}"
-            for test_path in "${test_out_paths_array[@]}"; do
-                echo -e "${YELLOW}  - $test_path${NC}"
-            done
-            
-            local out_file_found=false
-            local working_out_path=""
-            for test_out_path in "${test_out_paths_array[@]}"; do
-                if [[ -f "$test_out_path" ]]; then
-                    out_file_found=true
-                    working_out_path="$test_out_path"
-                    echo -e "${GREEN}✓ Found at: $test_out_path${NC}"
-                    break
-                fi
-            done
-            
-            if [[ "$out_file_found" != "true" ]]; then
-                echo -e "${RED}✗ Test output file not found: $test_out_file${NC}"
-                echo -e "${YELLOW}Suggestion: Try ./$(basename "$test_out_file")${NC}"
-                sleep 3
+            local resolved_test_out_path
+            if resolved_test_out_path=$(resolve_file_path "$test_out_file" "Test output file"); then
+                normalized_test_out="$normalized_test_out $resolved_test_out_path"
+            else
                 valid_test_out=false
+                sleep 3
                 break
             fi
-            
-            normalized_test_out="$normalized_test_out $working_out_path"
         done
         
         if [[ "$valid_test_out" != "true" ]]; then
@@ -301,6 +247,7 @@ add_problem() {
         
         echo -e "${CYAN}Problem Details:${NC}"
         echo -e "${YELLOW}Title:${NC} $title"
+        echo -e "${YELLOW}Time Limit:${NC} $time_limit seconds"
         echo -e "${YELLOW}Problem File:${NC} $problem_file_path"
         echo -e "${YELLOW}Test Cases:${NC} $test_in_count"
         echo
@@ -311,7 +258,7 @@ add_problem() {
         
         case $choice in
             [Yy])
-                if create_problem "$title" "$problem_file_path" "$test_in_paths" "$test_out_paths" "$username"; then
+                if create_problem "$title" "$problem_file_path" "$test_in_paths" "$test_out_paths" "$username" "$time_limit"; then
                     show_message "Problem added successfully!" "success"
                     sleep 2
                     clear_screen
@@ -341,20 +288,34 @@ create_problem() {
     local test_in_paths="$3"
     local test_out_paths="$4"
     local username="$5"
+    local time_limit="$6"
     
     # Generate problem ID and clean title
     local problem_id=$(get_next_problem_id)
     local clean_title=$(echo "$title" | tr ' ' '_' | tr -cd '[:alnum:]_')
     local problem_dir_name="${problem_id}_${clean_title}"
     local problem_dir="$PROBLEMS_DIR/$problem_dir_name"
+    local current_date=$(date "+%Y-%m-%d %H:%M:%S")
     
     # Create problem directory
     if ! mkdir -p "$problem_dir"; then
         return 1
     fi
     
-    # Copy problem file
-    if ! cp "$problem_file_path" "$problem_dir/problem.txt"; then
+    # Create problem file with header information
+    local problem_dest="$problem_dir/problem.txt"
+    
+    # Add header information
+    cat > "$problem_dest" << EOF
+TITLE: $title
+CREATED_BY: $username
+TIME_LIMIT: $time_limit
+CREATED_DATE: $current_date
+
+EOF
+    
+    # Append original problem content
+    if ! cat "$problem_file_path" >> "$problem_dest"; then
         rm -rf "$problem_dir"
         return 1
     fi

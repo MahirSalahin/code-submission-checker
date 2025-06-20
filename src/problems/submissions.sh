@@ -87,11 +87,6 @@ prompt_and_validate_solution_file() {
     
     echo -e "${CYAN}Enter the path to your solution file:${NC}"
     echo -e "${YELLOW}Supported languages: C (.c), C++ (.cpp), C# (.cs), Java (.java), Python (.py)${NC}"
-    echo -e "${YELLOW}Examples:${NC}"
-    echo -e "${YELLOW}  - ./solution.cpp (if file is in current directory)${NC}"
-    echo -e "${YELLOW}  - C:/Users/YourName/Desktop/solution.py${NC}"
-    echo -e "${YELLOW}  - /mnt/c/path/to/solution.java${NC}"
-    echo -e "${CYAN}Current directory: $(pwd)${NC}"
     
     local solution_path
     if ! read_file_path "Solution file: " solution_path; then
@@ -848,7 +843,6 @@ submit_solution() {
         clear_screen
         show_header "SUBMIT SOLUTION - Press ESC to go back"
         
-        echo -e "${YELLOW}💡 Tip: Press ESC key to return to previous menu${NC}"
         echo -e "${YELLOW}💡 Make sure your solution file is ready before submitting${NC}"
         echo
         

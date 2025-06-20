@@ -22,13 +22,11 @@ This system provides a comprehensive solution for automated code evaluation, sup
 ### Teacher Features
 - Add new problems and test cases
 - Generate and view comprehensive reports
-- Schedule automated tasks
 - Manage student submissions
 
 ### System Features
 - Multi-language support (C, C++, C#, Java, Python)
 - Automated compilation and testing
-- Batch processing capabilities
 - Detailed logging and reporting
 - Professional CLI interface with colors and formatting
 
@@ -107,7 +105,6 @@ code-submission-checker/
 2. Access teacher features:
    - **Add Problem**: Create new assignments with test cases
    - **See Reports**: View student performance and statistics
-   - **Schedule Tasks**: Set up automated processing
    - **Sign Out**: Exit your session
 
 ## Security Features

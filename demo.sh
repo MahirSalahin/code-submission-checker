@@ -39,7 +39,7 @@ echo
 
 echo "👥 User Roles:"
 echo "📚 STUDENT: Browse Problems | Submit Solutions | View My Submissions | Sign Out"
-echo "🎓 TEACHER: Add Problems | See Reports | Schedule Tasks | Sign Out"
+echo "🎓 TEACHER: Add Problems | See Reports | Sign Out"
 echo
 
 echo "🚀 To run the application:"

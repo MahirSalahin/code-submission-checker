@@ -59,7 +59,7 @@ EOF
     echo -e "${WHITE}A comprehensive solution for automated code evaluation and grading.${NC}"
     echo
     echo -e "${CYAN}Supported Languages:${NC} C, C++, C#, Java, Python"
-    echo -e "${CYAN}Features:${NC} Automated Testing, Batch Processing, Detailed Reports"
+    echo -e "${CYAN}Features:${NC} Automated Testing, Detailed Reports, Multi-Language Support"
     echo
     echo -e "${CYAN}===============================================================================${NC}"
     echo

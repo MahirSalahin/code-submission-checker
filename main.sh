@@ -17,6 +17,7 @@ source "$SCRIPT_DIR/src/config/config.sh"
 source "$SCRIPT_DIR/src/utils/ui.sh"
 source "$SCRIPT_DIR/src/auth/auth.sh"
 source "$SCRIPT_DIR/src/problems/problems.sh"
+source "$SCRIPT_DIR/src/teachers/problems.sh"
 
 # =============================================================================
 # Main Function
@@ -127,6 +128,7 @@ handle_signin() {
     else
         show_message "Invalid username or password!" "error"
         sleep 2
+        clear_screen
     fi
 }
 
@@ -178,12 +180,14 @@ signup_student() {
     if [[ -z "$student_id" ]]; then
         show_message "Student ID cannot be empty!" "error"
         sleep 2
+        clear_screen
         return
     fi
     
     if user_exists "$student_id"; then
         show_message "Student ID already registered!" "error"
         sleep 2
+        clear_screen
         return
     fi
     
@@ -205,12 +209,14 @@ signup_student() {
     if [[ "$password" != "$confirm_password" ]]; then
         show_message "Passwords do not match!" "error"
         sleep 2
+        clear_screen
         return
     fi
     
     if [[ ${#password} -lt 6 ]]; then
         show_message "Password must be at least 6 characters long!" "error"
         sleep 2
+        clear_screen
         return
     fi
     
@@ -218,9 +224,11 @@ signup_student() {
         show_message "Student registration successful! You can now sign in." "success"
         log_action "REGISTER" "$student_id" "Student registered successfully"
         sleep 2
+        clear_screen
     else
         show_message "Registration failed. Please try again." "error"
         sleep 2
+        clear_screen
     fi
 }
 
@@ -228,7 +236,6 @@ signup_teacher() {
     clear_screen
     show_header "TEACHER REGISTRATION - Press ESC to go back"
     
-    echo -e "${YELLOW}💡 Tip: Press ESC key to return to previous menu${NC}"
     echo
     
     local username
@@ -243,12 +250,14 @@ signup_teacher() {
     if [[ -z "$username" ]]; then
         show_message "Username cannot be empty!" "error"
         sleep 2
+        clear_screen
         return
     fi
     
     if user_exists "$username"; then
         show_message "Username already taken!" "error"
         sleep 2
+        clear_screen
         return
     fi
     
@@ -270,12 +279,14 @@ signup_teacher() {
     if [[ "$password" != "$confirm_password" ]]; then
         show_message "Passwords do not match!" "error"
         sleep 2
+        clear_screen
         return
     fi
     
     if [[ ${#password} -lt 6 ]]; then
         show_message "Password must be at least 6 characters long!" "error"
         sleep 2
+        clear_screen
         return
     fi
     
@@ -283,9 +294,11 @@ signup_teacher() {
         show_message "Teacher registration successful! You can now sign in." "success"
         log_action "REGISTER" "$username" "Teacher registered successfully"
         sleep 2
+        clear_screen
     else
         show_message "Registration failed. Please try again." "error"
         sleep 2
+        clear_screen
     fi
 }
 
@@ -351,8 +364,7 @@ show_teacher_menu() {
         
         case $choice in
             1)
-                show_message "Add Problem feature coming soon!" "info"
-                sleep 2
+                add_problem "$username"
                 ;;
             2)
                 show_message "See Reports feature coming soon!" "info"

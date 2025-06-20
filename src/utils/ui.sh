@@ -236,3 +236,30 @@ read_password_esc() {
         return 1  # ESC pressed
     fi
 }
+
+# =============================================================================
+# Alternative Input Functions for File Paths
+# =============================================================================
+
+# Simple read function for file paths (more reliable than character-by-character)
+read_file_path() {
+    local prompt="$1"
+    local var_name="$2"
+    local input=""
+    
+    echo -e "${YELLOW}💡 Press Ctrl+C to cancel${NC}"
+    echo -n -e "$prompt"
+    
+    # Use regular read for better file path input
+    if ! read -r input; then
+        # Ctrl+C was pressed
+        echo
+        echo -e "${YELLOW}✓ Cancelled...${NC}"
+        sleep 0.5
+        return 1
+    fi
+    
+    # Set the variable using indirect assignment
+    eval "$var_name=\"\$input\""
+    return 0
+}

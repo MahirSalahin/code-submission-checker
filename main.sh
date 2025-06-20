@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 
 # =============================================================================
 # Code Submission Checker - Main Entry Point
@@ -17,6 +17,7 @@ source "$SCRIPT_DIR/src/config/config.sh"
 source "$SCRIPT_DIR/src/utils/ui.sh"
 source "$SCRIPT_DIR/src/auth/auth.sh"
 source "$SCRIPT_DIR/src/problems/problems.sh"
+source "$SCRIPT_DIR/src/problems/submissions.sh"
 source "$SCRIPT_DIR/src/teachers/problems.sh"
 
 # =============================================================================
@@ -325,8 +326,7 @@ show_student_menu() {
                 browse_problems "$username"
                 ;;
             2)
-                show_message "Submit Solution feature coming soon!" "info"
-                sleep 2
+                submit_solution "$username"
                 ;;
             3)
                 show_message "My Submissions feature coming soon!" "info"

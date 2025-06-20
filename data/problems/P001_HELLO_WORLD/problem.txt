@@ -3,7 +3,7 @@ ID: 1
 CREATED_BY: system
 CREATED_DATE: 2024-01-15 10:00:00
 LANGUAGES: c cpp csharp java python
-TIME_LIMIT: 2
+TIME_LIMIT: 1
 
 DESCRIPTION:
 Write a program that prints "Hello, World!" to the standard output.

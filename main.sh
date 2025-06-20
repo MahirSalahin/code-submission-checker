@@ -355,7 +355,8 @@ show_teacher_menu() {
         echo -e "${CYAN}What would you like to do?${NC}"
         echo -e "${YELLOW}1.${NC} Add Problem"
         echo -e "${YELLOW}2.${NC} See Reports"
-        echo -e "${YELLOW}3.${NC} Sign Out"
+        echo -e "${YELLOW}3.${NC} My Problems"
+        echo -e "${YELLOW}4.${NC} Sign Out"
         echo
         
         read -p "$(echo -e "${CYAN}Enter your choice: ${NC}")" choice
@@ -368,6 +369,9 @@ show_teacher_menu() {
                 see_reports "$username"
                 ;;
             3)
+                my_problems "$username"
+                ;;
+            4)
                 log_action "SIGNOUT" "$username" "Teacher signed out"
                 show_message "Signed out successfully!" "success"
                 sleep 1
@@ -375,7 +379,7 @@ show_teacher_menu() {
                 return
                 ;;
             *)
-                show_message "Invalid choice. Please select 1, 2, or 3." "error"
+                show_message "Invalid choice. Please select 1, 2, 3, or 4." "error"
                 ;;
         esac
     done

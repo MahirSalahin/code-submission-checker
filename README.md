@@ -186,14 +186,6 @@ tail -f logs/system.log
 3. Update documentation for any new functionality
 4. Test with both student and teacher roles
 
-## License
-
-This project is developed for educational purposes at CUET CSE Department.
-
-## Author
-
-CUET CSE Student - Interactive CLI Project using Bash Shell Scripting
-
 ---
 
 For questions or support, please refer to the system logs or contact the development team.

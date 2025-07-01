@@ -156,10 +156,20 @@ show_problem_details() {
 browse_problems() {
     local username="$1"
     local current_page=1
+    local is_guest=""
+    
+    # Check if this is a guest user (public browsing)
+    if [[ "$username" == "guest" ]]; then
+        is_guest="true"
+    fi
     
     while true; do
         clear_screen
-        show_header "BROWSE PROBLEMS"
+        if [[ "$is_guest" == "true" ]]; then
+            show_header "BROWSE PROBLEMS (PUBLIC)"
+        else
+            show_header "BROWSE PROBLEMS"
+        fi
         
         echo -e "${CYAN}Available Problems:${NC}"
         echo
@@ -182,10 +192,18 @@ browse_problems() {
                 fi
                 echo -e "${YELLOW}5.${NC} Go to specific page"
                 echo -e "${YELLOW}6.${NC} Refresh list"
-                echo -e "${YELLOW}7.${NC} Back to dashboard"
+                if [[ "$is_guest" == "true" ]]; then
+                    echo -e "${YELLOW}7.${NC} Back to main menu"
+                else
+                    echo -e "${YELLOW}7.${NC} Back to dashboard"
+                fi
             else
                 echo -e "${YELLOW}3.${NC} Refresh list"
-                echo -e "${YELLOW}4.${NC} Back to dashboard"
+                if [[ "$is_guest" == "true" ]]; then
+                    echo -e "${YELLOW}4.${NC} Back to main menu"
+                else
+                    echo -e "${YELLOW}4.${NC} Back to dashboard"
+                fi
             fi
             echo
             
@@ -197,7 +215,10 @@ browse_problems() {
                     read -p "$(echo -e "${CYAN}Enter problem ID (e.g., P001): ${NC}")" problem_input
                     if [[ -n "$problem_input" ]]; then
                         show_problem_details "$problem_input"
-                        log_action "VIEW_PROBLEM" "$username" "Viewed problem: $problem_input"
+                        # Only log for registered users, not guests
+                        if [[ "$is_guest" != "true" ]]; then
+                            log_action "VIEW_PROBLEM" "$username" "Viewed problem: $problem_input"
+                        fi
                     fi
                     ;;
                 2)
@@ -326,7 +347,10 @@ search_problems() {
                         read -p "$(echo -e "${CYAN}Enter problem ID (e.g., P001): ${NC}")" problem_input
                         if [[ -n "$problem_input" ]]; then
                             show_problem_details "$problem_input"
-                            log_action "VIEW_PROBLEM" "$username" "Viewed problem: $problem_input (via search: $search_term)"
+                            # Only log for registered users, not guests
+                            if [[ "$username" != "guest" ]]; then
+                                log_action "VIEW_PROBLEM" "$username" "Viewed problem: $problem_input (via search: $search_term)"
+                            fi
                         fi
                         ;;
                     2)
@@ -386,6 +410,9 @@ search_problems() {
             fi
         done
         
-        log_action "SEARCH_PROBLEMS" "$username" "Searched for: $search_term"
+        # Only log for registered users, not guests
+        if [[ "$username" != "guest" ]]; then
+            log_action "SEARCH_PROBLEMS" "$username" "Searched for: $search_term"
+        fi
     done
 }

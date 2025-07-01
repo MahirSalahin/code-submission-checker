@@ -68,9 +68,10 @@ EOF
 # Show main menu
 show_main_menu() {
     echo -e "${CYAN}Please choose an option:${NC}"
-    echo -e "${YELLOW}1.${NC} Sign In"
-    echo -e "${YELLOW}2.${NC} Sign Up"
-    echo -e "${YELLOW}3.${NC} Exit"
+    echo -e "${YELLOW}1.${NC} Browse Problems"
+    echo -e "${YELLOW}2.${NC} Sign In"
+    echo -e "${YELLOW}3.${NC} Sign Up"
+    echo -e "${YELLOW}4.${NC} Exit"
     echo
 }
 

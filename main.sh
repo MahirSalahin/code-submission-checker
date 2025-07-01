@@ -38,18 +38,21 @@ main() {
         
         case $choice in
             1)
-                handle_signin
+                browse_problems "guest"
                 ;;
             2)
-                handle_signup
+                handle_signin
                 ;;
             3)
+                handle_signup
+                ;;
+            4)
                 clear_screen
                 show_message "Thank you for using Code Submission Checker!" "info"
                 exit 0
                 ;;
             *)
-                show_message "Invalid choice. Please select 1, 2, or 3." "error"
+                show_message "Invalid choice. Please select 1, 2, 3, or 4." "error"
                 ;;
         esac
     done
